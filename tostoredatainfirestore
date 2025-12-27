@@ -1,0 +1,91 @@
+const { Firestore } = require('@google-cloud/firestore');
+
+// Initialize Firestore
+const firestore = new Firestore(
+    {
+        databaseId:'tostoredata'    //DatabaseID
+    }
+);
+
+exports.createBooking = async (req, res) => {
+  try {
+    console.log("Request received.");
+
+    // --- NEW: CHECK THE TAG HERE ---
+    // In Dialogflow CX, the tag is inside req.body.fulfillmentInfo.tag
+    const tag = req.body.fulfillmentInfo?.tag;
+
+    if (tag !== 'save-booking') {
+      // If the tag doesn't match, return immediately or handle other tags
+      console.log(`Ignored tag: ${tag}`);
+      return res.status(200).json({
+        fulfillmentResponse: {
+          messages: [{ text: { text: ["Webhook received, but tag did not match."] } }]
+        }
+      });
+    }
+    // -------------------------------
+
+    // 1. Extract Parameters safely
+    const sessionInfo = req.body.sessionInfo;
+    const params = sessionInfo?.parameters || {};
+
+    // 2. Parse Data
+    const rawDate = params.bookingdate;
+    const bookingDate = (typeof rawDate === 'object' && rawDate !== null) 
+        ? `${rawDate.year}-${rawDate.month}-${rawDate.day}` 
+        : (rawDate || "No Date");
+
+    const rawTime = params.bookingtime;
+    const bookingTime = (typeof rawTime === 'object' && rawTime !== null) 
+        ? `${rawTime.hours}:${rawTime.minutes}` 
+        : (rawTime || "No Time");
+
+    // 3. Generate Random ID
+    const randomNumber = Math.floor(Math.random() * 1000) + 1;
+    const registerId = `REG${randomNumber}`;
+
+    // 4. Prepare Data Object
+    const dataToSave = {
+      bookingName: params.bookingname || "Unknown",
+      phoneNumber: params.phonenumber || "Unknown",
+      date: bookingDate,
+      time: bookingTime,
+      persons: Number(params.noofpersons) || 1,
+      registerId: registerId,
+      timestamp: Firestore.FieldValue.serverTimestamp()
+    };
+
+    console.log(`Saving Booking: ${registerId} for ${dataToSave.bookingName}`);
+
+    // 5. Save to Firestore
+    await firestore.collection('bookings').doc(registerId).set(dataToSave);
+
+    // 6. Send Response
+    res.status(200).json({
+      fulfillmentResponse: {
+        messages: [
+          {
+            text: {
+              text: [`Redid. Your Registration ID is ${registerId}`]
+            }
+          }
+        ]
+      },
+      sessionInfo: {
+        parameters: {
+          registerId: registerId,
+          booking_status: "confirmed"
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error("Critical Error:", error);
+    res.status(500).json({
+      fulfillmentResponse: {
+        messages: [{ text: { text: ["System Error: Could not save booking."] } }]
+      }
+    });
+  }
+};
