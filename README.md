@@ -11,3 +11,13 @@ To do this, 1st we need to grant the IAM permissions to our CLoud Storage.
       Click "Add Another Role."
 
       Search for and select Cloud Datastore User (this is the standard role for Firestore access).
+
+Run this below code in cloud shell:-
+     gcloud functions deploy helloHttp \
+  --runtime nodejs20 \
+  --entry-point helloHttp \
+  --trigger-http \
+  --allow-unauthenticated \
+  --region us-central1
+
+  If it asks for authenticate with project ID - follow the steps given in cloudshell.[like- give projectID] and save.
