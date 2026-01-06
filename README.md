@@ -23,4 +23,10 @@ Run this below code in cloud shell:-
   If it asks for authenticate with project ID - follow the steps given in cloudshell.[like- give projectID] and save.
 
 
-  If your webhook wants to read paramerts, while calling paramters use `   ` symbol to call it.
+  If your webhook wants to read paramerts, while calling paramters use `   ` symbol to call it. Not a parameter, what ever you want to call use this ` symbol only.
+
+  Examples:-- 
+       1- To call the text to display in the output:--             `The weather in ${weatherDetails.location} is ${weatherDetails.weather_descriptions} with a temperature of ${weatherDetails.temperature}.`
+
+          2- To cal the usrl:-  const weatherUrl = `https://api.weatherstack.com/current?query=${encodeURIComponent(location)}&access_key=04fc2b59d4c3ccae0def30222a7280ff`;
+
